@@ -4,7 +4,16 @@ import threading
 def create_client():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    client_socket.connect(('127.0.0.1', 3206))
+    # try:
+    client_socket.connect(('127.0.0.1', 3201))
+
+    answer = client_socket.recv(1024).decode()
+    if (answer):
+        print(answer)
+    else:
+        print(f"Failed to connect to server")
+    # except Exception as e:
+    #     print(f"Failed to connect to server")
 
     return client_socket
 
