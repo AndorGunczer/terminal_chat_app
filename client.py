@@ -4,7 +4,7 @@ import threading
 def create_client():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    client_socket.connect(('127.0.0.1', 3205))
+    client_socket.connect(('127.0.0.1', 3206))
 
     return client_socket
 
