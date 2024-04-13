@@ -1,52 +1,65 @@
 import socket
 import threading
 
-def create_client():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+class Client:
 
-    # try:
-    client_socket.connect(('127.0.0.1', 2601))
+    def __init__(self):
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.ipaddr = input("Server IP: ")
+        self.port = int(input("Server port: "))
+        self.nickname = ""
 
-    answer = client_socket.recv(1024).decode()
-    if (answer):
-        print(answer)
-    else:
-        print(f"Failed to connect to server")
-    # except Exception as e:
-    #     print(f"Failed to connect to server")
+    def create_client(self):
+        # Connection Handshake
 
-    return client_socket
+        self.client_socket.connect((self.ipaddr, self.port))
+        answer = self.client_socket.recv(1024).decode()
+        if (answer):
+            print(answer)
+            self.client_socket.send("ACK: Connection".encode())
+        else:
+            print(f"Failed to connect to server")
+            return ''
 
-def sending_function(server_socket):
-    while True:
-        text = input("Andor: ")
+        # Set Nickname
+        print(self.client_socket.recv(1024).decode())
+        self.nickname = input()
+        self.client_socket.send(self.nickname.encode())
 
-        server_socket.send(text.encode())
-    return
+        return self.client_socket
 
-def receiving_function(server_socket):
-    while True:
-        text = server_socket.recv(1024).decode()
+    def sending_function(self, server_socket):
+        while True:
+            text = input("")
 
-        print(text)
-    return
+            server_socket.send(text.encode())
+        return
+
+    def receiving_function(self, server_socket):
+        while True:
+            text = server_socket.recv(1024).decode()
+
+            print(text + "\n")
+        return
+
+    def run_client(self):
+        server_socket = self.create_client()
+
+        receiving_thread = threading.Thread(target=self.receiving_function, args=(server_socket,))
+        sending_thread = threading.Thread(target=self.sending_function, args=(server_socket,))
+
+        try: 
+            receiving_thread.start()
+            sending_thread.start()
+
+            # receiving_thread.join()
+            sending_thread.join()
+        except Exception as e:
+            print("threads error")
+            server_socket.close()
 
 def run():
-    server_socket = create_client()
-
-    receiving_thread = threading.Thread(target=receiving_function, args=(server_socket,))
-    sending_thread = threading.Thread(target=sending_function, args=(server_socket,))
-
-    try: 
-        receiving_thread.start()
-        sending_thread.start()
-
-        # receiving_thread.join()
-        sending_thread.join()
-    except Exception as e:
-        print("threads error")
-        server_socket.close()
-
-
+    client1 = Client()
+    client1.run_client()
 
 run()

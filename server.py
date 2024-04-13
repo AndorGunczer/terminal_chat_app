@@ -9,10 +9,15 @@ class Server:
         self.ipaddr = input("Server IP: ")
         self.port = int(input("Port: "))
 
+    def broadcast(self, client_socket, received):
+        for client in self.clients:
+            if client != client_socket:
+                client.send(f"{self.clients[client_socket]}: {received}".encode())
+
     def activate_socket(self):
         self.server_socket.bind((self.ipaddr, self.port))
         self.server_socket.listen(5)
-        print("Server listening on port 3200...")
+        print(f"Server listening on port {self.port}...")
         return self.server_socket
 
     def handle_client(self, client_socket, client_address):
@@ -20,14 +25,21 @@ class Server:
         
         # reassure client about successful connection
         client_socket.send(f"Server at {self.server_socket.getsockname()[0]}: Connected to server".encode())
+        if (client_socket.recv(1024).decode() == "ACK: Connection"):
+            client_socket.send("Choosen Nickname: ".encode())
+        
+        nicknameInput = client_socket.recv(1024).decode()
+
+        self.clients[client_socket] = nicknameInput
         
         while True:
             try:
-                received = client_socket.recv(1024)
+                received = client_socket.recv(1024).decode()
                 if not received:
                     print(f"Connection closed by {client_address}.")
                     break
-                print(f"Received from {client_address}: {received.decode()}")
+                # print(f"Received from {client_address}: {received.decode()}")
+                self.broadcast(client_socket, received)
             except Exception as e:
                 print(f"Error receiving data from {client_address}: {e}")
                 break
