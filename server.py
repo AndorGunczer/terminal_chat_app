@@ -11,8 +11,8 @@ class Server:
 
     def broadcast(self, client_socket, received):
         for client in self.clients:
-            if client != client_socket:
-                client.send(f"{self.clients[client_socket]}: {received}".encode())
+            # if client != client_socket:
+            client.send(f"{self.clients[client_socket]}: {received}".encode())
 
     def activate_socket(self):
         self.server_socket.bind((self.ipaddr, self.port))

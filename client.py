@@ -1,65 +1,101 @@
+import tkinter as tk
+from tkinter import messagebox
 import socket
 import threading
 
-class Client:
+class myGui:
+    def __init__(self):
+        self.root = tk.Tk()
 
+        self.root.geometry("600x700")
+        self.label = tk.Label(self.root, text="AndorChat Client")
+        self.label.pack()
+
+        self.messengerWin = tk.Text(self.root, height=30, width=38)
+        self.messengerWin.pack()
+        
+        frame = tk.Frame(self.root)
+        frame.pack()
+
+        self.serverConnect = tk.Text(frame, height=2, width=14)
+        self.serverConnect.pack(side="left")
+        
+        self.portConnect = tk.Text(frame, height=2, width=14)
+        self.portConnect.pack(side="left")
+
+        # Button for connecting to the server
+        self.buttonConnect = tk.Button(frame, text="Connect", command=self.connect_to_server)
+        self.buttonConnect.pack(side="left")
+
+        self.userText = tk.Text(self.root, height=2, width=38)
+        self.userText.pack()
+
+        # Button for sending messages
+        self.userTextButton = tk.Button(self.root, text="Send", command=self.send_message)
+        self.userTextButton.pack()
+
+        self.root.mainloop()
+
+    def connect_to_server(self):
+        ipaddr = self.serverConnect.get("1.0", "end-1c")  # Get the IP address from the text widget
+        port = int(self.portConnect.get("1.0", "end-1c"))  # Get the port from the text widget
+
+        # Call the create_client method of the Client class
+        self.client = Client()
+        self.client.create_client(ipaddr, port)
+        self.client.run_client(self)
+
+    def send_message(self):
+        message = self.userText.get("1.0", "end-1c")  # Get the message from the text widget
+        if self.client:
+            self.client.send_message(message)
+        else:
+            messagebox.showerror("Error", "You need to connect to the server first")
+
+class Client:
     def __init__(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.ipaddr = input("Server IP: ")
-        self.port = int(input("Server port: "))
         self.nickname = ""
 
-    def create_client(self):
-        # Connection Handshake
-
-        self.client_socket.connect((self.ipaddr, self.port))
-        answer = self.client_socket.recv(1024).decode()
-        if (answer):
-            print(answer)
-            self.client_socket.send("ACK: Connection".encode())
-        else:
-            print(f"Failed to connect to server")
-            return ''
-
-        # Set Nickname
-        print(self.client_socket.recv(1024).decode())
-        self.nickname = input()
-        self.client_socket.send(self.nickname.encode())
-
-        return self.client_socket
-
-    def sending_function(self, server_socket):
-        while True:
-            text = input("")
-
-            server_socket.send(text.encode())
-        return
-
-    def receiving_function(self, server_socket):
-        while True:
-            text = server_socket.recv(1024).decode()
-
-            print(text + "\n")
-        return
-
-    def run_client(self):
-        server_socket = self.create_client()
-
-        receiving_thread = threading.Thread(target=self.receiving_function, args=(server_socket,))
-        sending_thread = threading.Thread(target=self.sending_function, args=(server_socket,))
-
-        try: 
-            receiving_thread.start()
-            sending_thread.start()
-
-            # receiving_thread.join()
-            sending_thread.join()
+    def create_client(self, ipaddr, port):
+        try:
+            self.client_socket.connect((ipaddr, port))
+            answer = self.client_socket.recv(1024).decode()
+            if answer:
+                print(answer)
+                self.client_socket.send("ACK: Connection".encode())
+                # Set Nickname
+                self.nickname = input("Enter your nickname: ")
+                self.client_socket.send(self.nickname.encode())
+                #self.client_socket.
+            else:
+                print("Failed to connect to server")
         except Exception as e:
-            print("threads error")
-            server_socket.close()
+            print("Connection error:", e)
 
-def run():
-    client1 = Client()
-    client1.run_client()
+    def send_message(self, message):
+        try:
+            self.client_socket.send(message.encode())
+        except Exception as e:
+            print("Sending message error:", e)
 
-run()
+    def receiving_function(self, gui):
+        while True:
+            try:
+                text = self.client_socket.recv(1024).decode()
+                if not text:
+                    print("Server disconnected.")
+                    break
+                print(text + "\n")
+                gui.messengerWin.insert(tk.END, text + "\n")
+                gui.messengerWin.see(tk.END)
+            except Exception as e:
+                print("Receiving message error:", e)
+                break
+
+    def run_client(self, gui):
+        receiving_thread = threading.Thread(target=self.receiving_function, args=(gui,))
+        receiving_thread.start()
+
+if __name__ == "__main__":
+    gui = myGui()
