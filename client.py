@@ -34,6 +34,8 @@ class myGui:
         self.userTextButton = tk.Button(self.root, text="Send", command=self.send_message)
         self.userTextButton.pack()
 
+        self.root.bind('<Return>', self.send_message)
+
         self.root.mainloop()
 
     def connect_to_server(self):
@@ -45,8 +47,11 @@ class myGui:
         self.client.create_client(ipaddr, port)
         self.client.run_client(self)
 
-    def send_message(self):
-        message = self.userText.get("1.0", "end-1c")  # Get the message from the text widget
+    def send_message(self, event = None):
+        message = self.userText.get("1.0", "end-1c").strip()  # Get the message from the text widget
+        if message == "":
+            return
+        self.userText.delete('1.0', tk.END)
         if self.client:
             self.client.send_message(message)
         else:
