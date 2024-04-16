@@ -43,7 +43,7 @@ class myGui:
         port = int(self.portConnect.get("1.0", "end-1c"))  # Get the port from the text widget
 
         # Call the create_client method of the Client class
-        self.client = Client()
+        self.client = Client(self)
         self.client.create_client(ipaddr, port)
         self.client.run_client(self)
 
@@ -57,10 +57,50 @@ class myGui:
         else:
             messagebox.showerror("Error", "You need to connect to the server first")
 
+class PopupWindow:
+    #not sure if the structure is fine
+    def __init__(self, parent, client):
+        self.parent = parent
+        self.popup = tk.Toplevel(parent.root)
+        print(1)
+
+        self.popup.geometry("600x700")
+        print(2)
+
+        self.label = tk.Label(self.popup, text="Choose a nickname:").pack()
+        print(3)
+        self.nicknameText = tk.Text(self.popup, height=1, width=60)
+        self.nicknameText.pack()
+        print(4)
+        self.nicknameButton = tk.Button(self.popup, height=1, width=60, text="Submit", command=lambda: self.submit(client))
+        print(5)
+        self.nicknameButton.pack()
+
+        # Store the PopupWindow instance in the parent
+        # parent.popup_window = self
+        # self.popup.mainloop()
+
+    def submit(self, client):
+        text = self.nicknameText.get("1.0", "end-1c").strip()
+        self.send_message(client, text)
+        self.popup.destroy()  # Destroy the popup window
+
+    def send_message(self, client, text):
+        message = text  # Get the message from the text widget
+        if message == "":
+            return
+        self.nicknameText.delete('1.0', tk.END)
+        if client:
+            client.client_socket.send(message.encode())
+        else:
+            messagebox.showerror("Error", "You need to connect to the server first")
+        
+
 class Client:
-    def __init__(self):
+    def __init__(self, gui):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.nickname = ""
+        self.gui = gui
 
     def create_client(self, ipaddr, port):
         try:
@@ -70,8 +110,10 @@ class Client:
                 print(answer)
                 self.client_socket.send("ACK: Connection".encode())
                 # Set Nickname
-                self.nickname = input("Enter your nickname: ")
-                self.client_socket.send(self.nickname.encode())
+                popup = PopupWindow(self.gui, self)
+                print("Went further")
+                # self.nickname = input("Enter your nickname: ")
+                # self.client_socket.send(self.nickname.encode())
                 #self.client_socket.
             else:
                 print("Failed to connect to server")

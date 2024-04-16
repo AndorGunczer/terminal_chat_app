@@ -25,8 +25,7 @@ class Server:
         
         # reassure client about successful connection
         client_socket.send(f"Server at {self.server_socket.getsockname()[0]}: Connected to server".encode())
-        if (client_socket.recv(1024).decode() == "ACK: Connection"):
-            client_socket.send("Choosen Nickname: ".encode())
+        client_socket.recv(1024).decode() == "ACK: Connection"
         
         nicknameInput = client_socket.recv(1024).decode()
 
